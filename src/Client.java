@@ -11,26 +11,15 @@ public class Client {
     private PrintWriter output;
     private Socket socket;
     private BufferedReader in;
-    private final BufferedReader stdin;
     private final String userName;
 
-    public static void main(String[] args) {
-        Client client = new Client();
 
-        client.connect();
-        client.receiveMessage();
-        client.sendMessage();
-    }
+    public Client(String userName) {
+        this.userName = userName;
 
-    public Client() {
-        stdin = new BufferedReader(new InputStreamReader(System.in));
-
-        System.out.println("Enter Username: ");
-        try {
-            userName = stdin.readLine();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        connect();
+        receiveMessage();
+        sendMessage();
     }
 
     public void connect() {
@@ -61,6 +50,7 @@ public class Client {
     // Don't need to thread this for now
     public void sendMessage() {
         String userMessage;
+        BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         try {
             System.out.println("Input a message: ");
 
