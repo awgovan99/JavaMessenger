@@ -1,15 +1,12 @@
-import java.net.*;
-import java.io.*;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// Message comes in from client socket
-// Then need to repeat message to all other clients
-// ClientHandler will handle input for each client socket
-// Server will then output message to all clients except the one the message is from
 
 public class Server {
 
