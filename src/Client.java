@@ -11,26 +11,16 @@ public class Client {
     private PrintWriter output;
     private Socket socket;
     private BufferedReader in;
-    private final BufferedReader stdin;
     private final String userName;
+    private final ChatUI chatUI;
 
-    public static void main(String[] args) {
-        Client client = new Client();
 
-        client.connect();
-        client.receiveMessage();
-        client.sendMessage();
-    }
+    public Client(String userName, ChatUI chatUI) {
+        this.userName = userName;
+        this.chatUI = chatUI;
 
-    public Client() {
-        stdin = new BufferedReader(new InputStreamReader(System.in));
-
-        System.out.println("Enter Username: ");
-        try {
-            userName = stdin.readLine();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        connect();
+        receiveMessage();
     }
 
     public void connect() {
@@ -58,29 +48,9 @@ public class Client {
         }
     }
 
-    // Don't need to thread this for now
-    public void sendMessage() {
-        String userMessage;
-        try {
-            System.out.println("Input a message: ");
-
-            while ((userMessage = stdin.readLine()) != null) {
-                if(userMessage.equals("exit")) break;
-
-                String msg = userName + ": " + userMessage;
-                output.println(msg);
-                System.out.println(msg);
-
-                System.out.println("Input a message: ");
-            }
-
-            disconnect();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            disconnect();
-        }
+    public void sendMessage(String userMessage) {
+        String msg = userName + ": " + userMessage;
+        output.println(msg);
     }
 
     public void receiveMessage() {
@@ -88,7 +58,7 @@ public class Client {
             try {
             String serverMessage;
                 while ((serverMessage = in.readLine()) != null) {
-                    System.out.println(serverMessage);
+                    chatUI.addMessage(serverMessage);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
