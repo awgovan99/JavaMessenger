@@ -3,7 +3,8 @@ public class Message {
     public enum Type {
         TEXT,
         USER_JOINED,
-        USER_LEFT
+        USER_LEFT,
+        USER_LIST
     }
 
     private final Type type;

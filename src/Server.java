@@ -1,9 +1,11 @@
+import com.google.gson.Gson;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -13,8 +15,9 @@ public class Server {
     final int portNumber = 1234;
 
     private final ServerSocket serverSocket;
-    private final List<ClientHandler> clients;
+    private final ConcurrentHashMap<String, ClientHandler> clients = new ConcurrentHashMap<>();
     private final ExecutorService executor;
+    private final Gson gson = new Gson();
 
     public static void main(String[] args) {
         Server server = new Server();
@@ -26,7 +29,6 @@ public class Server {
         try {
 
             serverSocket = new ServerSocket(portNumber);
-            clients = new CopyOnWriteArrayList<>(); // Makes list thread safe
             executor = Executors.newVirtualThreadPerTaskExecutor();
 
         } catch (IOException e) {
@@ -34,29 +36,48 @@ public class Server {
         }
     }
 
+    // might need to thread this
     public void connectClients() {
         try {
             while(true) {
                 Socket client = serverSocket.accept();
                 ClientHandler handler = new ClientHandler(client, this);
-                clients.add(handler);
                 executor.submit(handler);
+
+                // Send list of all online users to connected client
+                sendUserList(handler);
+
+                clients.put(handler.getUserName(), handler);
+
+                System.out.println(clients);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void broadcastMessage(String message, String sender) {
-        for (ClientHandler client : clients) {
+    public void broadcastMessage(Message msg) {
+        String sender = msg.getSender();
+        String msgJson = gson.toJson(msg);
+
+        // Might change loop condition
+        for (ClientHandler client : clients.values()) {
             if(!Objects.equals(client.getUserName(), sender)) {
-                client.outPutMessage(message);
+                client.outPutMessage(msgJson);
             }
         }
     }
 
     public void removeClient(ClientHandler client) {
-        clients.remove(client);
+        clients.remove(client.getUserName());
+
+        System.out.println(clients);
     }
 
+    public void sendUserList(ClientHandler client) {
+        List<String> usernames = new ArrayList<>(clients.keySet());
+        Message usersListMsg = new Message(Message.Type.USER_LIST, "SERVER", gson.toJson(usernames));
+
+        client.outPutMessage(gson.toJson(usersListMsg));
+    }
 }

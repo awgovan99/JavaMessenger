@@ -39,13 +39,14 @@ public class ClientHandler implements Runnable {
     }
 
     public void receiveMessage() {
-        Message joinMessage = new Message(Message.Type.USER_JOINED, userName, " has joined the chat!");
-        server.broadcastMessage(gson.toJson(joinMessage), userName);
+        Message joinMessage = new Message(Message.Type.USER_JOINED, userName, null);
+        server.broadcastMessage(joinMessage);
 
         String receivedMessage;
         try {
             while ((receivedMessage = input.readLine()) != null) {
-                server.broadcastMessage(receivedMessage, userName);
+                Message msg = gson.fromJson(receivedMessage, Message.class);
+                server.broadcastMessage(msg);
             }
             disconnect();
         } catch (IOException e) {
@@ -63,8 +64,9 @@ public class ClientHandler implements Runnable {
 
     public void disconnect() {
         try {
-            Message exitMessage = new Message(Message.Type.USER_LEFT, userName, " has left the chat!");
-            server.broadcastMessage(gson.toJson(exitMessage), userName);
+            Message exitMessage = new Message(Message.Type.USER_LEFT, userName, null);
+            server.broadcastMessage(exitMessage);
+
             socket.close();
             server.removeClient(this);
         } catch (IOException e) {

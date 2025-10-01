@@ -3,8 +3,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class Client {
     // Using these for now
@@ -69,8 +71,19 @@ public class Client {
                             chatUI.addMessage(msg.getSender() + ": " + msg.getContent());
                             break;
 
-                        case USER_JOINED, USER_LEFT:
-                            chatUI.addMessage(msg.getSender() + msg.getContent());
+                        case USER_LIST:
+                            List<String> onlineUsers = gson.fromJson(msg.getContent(), new TypeToken<List<String>>(){}.getType());
+                            chatUI.updateUserList(onlineUsers);
+
+                            System.out.println(onlineUsers);
+                            break;
+
+                        case USER_JOINED:
+                            chatUI.addUser(msg.getSender());
+                            break;
+
+                        case USER_LEFT:
+                            chatUI.removeUser(msg.getSender());
                             break;
                     }
                 }
