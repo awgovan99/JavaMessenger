@@ -1,7 +1,12 @@
-import java.net.*;
-import java.io.*;
-import java.util.concurrent.*;
-
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class Client {
     // Using these for now
@@ -13,6 +18,7 @@ public class Client {
     private BufferedReader in;
     private final String userName;
     private final ChatUI chatUI;
+    private final Gson gson = new Gson();
 
 
     public Client(String userName, ChatUI chatUI) {
@@ -49,8 +55,9 @@ public class Client {
     }
 
     public void sendMessage(String userMessage) {
-        String msg = userName + ": " + userMessage;
-        output.println(msg);
+        Message msg = new Message(Message.Type.TEXT, userName, userMessage);
+        String json = gson.toJson(msg);
+        output.println(json);
     }
 
     public void receiveMessage() {
@@ -58,7 +65,27 @@ public class Client {
             try {
             String serverMessage;
                 while ((serverMessage = in.readLine()) != null) {
-                    chatUI.addMessage(serverMessage);
+                    Message msg = gson.fromJson(serverMessage, Message.class);
+                    switch (msg.getType()) {
+                        case TEXT:
+                            chatUI.addMessage(msg.getSender() + ": " + msg.getContent());
+                            break;
+
+                        case USER_LIST:
+                            List<String> onlineUsers = gson.fromJson(msg.getContent(), new TypeToken<List<String>>(){}.getType());
+                            chatUI.updateUserList(onlineUsers);
+
+                            System.out.println(onlineUsers);
+                            break;
+
+                        case USER_JOINED:
+                            chatUI.addUser(msg.getSender());
+                            break;
+
+                        case USER_LEFT:
+                            chatUI.removeUser(msg.getSender());
+                            break;
+                    }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
