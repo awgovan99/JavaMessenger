@@ -48,7 +48,7 @@ public class ChatUI {
         sendBtn.setOnAction(e -> {
             String message = inputField.getText();
             if (!message.isEmpty()) {
-                chatArea.appendText(username + ": " + message + "\n");
+                chatArea.appendText("[Public] "+ username + ": " + message + "\n");
                 inputField.clear();
                 client.sendMessage(message);
             }

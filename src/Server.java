@@ -58,13 +58,18 @@ public class Server {
 
     public void broadcastMessage(Message msg) {
         String sender = msg.getSender();
+        String recipient = msg.getRecipient();
         String msgJson = gson.toJson(msg);
 
-        // Might change loop condition
-        for (ClientHandler client : clients.values()) {
-            if(!Objects.equals(client.getUserName(), sender)) {
-                client.outPutMessage(msgJson);
+        if(recipient == null) {
+            // Might change loop condition
+            for (ClientHandler client : clients.values()) {
+                if (!Objects.equals(client.getUserName(), sender)) {
+                    client.outPutMessage(msgJson);
+                }
             }
+        } else{
+            clients.get(recipient).outPutMessage(msgJson);
         }
     }
 
@@ -76,7 +81,7 @@ public class Server {
 
     public void sendUserList(ClientHandler client) {
         List<String> usernames = new ArrayList<>(clients.keySet());
-        Message usersListMsg = new Message(Message.Type.USER_LIST, "SERVER", gson.toJson(usernames));
+        Message usersListMsg = new Message(Message.Type.USER_LIST, "SERVER", gson.toJson(usernames), null);
 
         client.outPutMessage(gson.toJson(usersListMsg));
     }

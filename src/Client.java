@@ -55,7 +55,13 @@ public class Client {
     }
 
     public void sendMessage(String userMessage) {
-        Message msg = new Message(Message.Type.TEXT, userName, userMessage);
+        Message msg = new Message(Message.Type.TEXT, userName, userMessage, null);
+        String json = gson.toJson(msg);
+        output.println(json);
+    }
+
+    public void sendDirectMessage(String directMessage, String recipient) {
+        Message msg = new Message(Message.Type.TEXT, userName, directMessage, recipient);
         String json = gson.toJson(msg);
         output.println(json);
     }
@@ -68,7 +74,11 @@ public class Client {
                     Message msg = gson.fromJson(serverMessage, Message.class);
                     switch (msg.getType()) {
                         case TEXT:
-                            chatUI.addMessage(msg.getSender() + ": " + msg.getContent());
+                            if(msg.getRecipient() == null) {
+                                chatUI.addMessage("[Public] "+ msg.getSender() + ": " + msg.getContent());
+                            } else{
+                                chatUI.addMessage("[" + msg.getSender() +" -> you]: " + msg.getContent());
+                            }
                             break;
 
                         case USER_LIST:
