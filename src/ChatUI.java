@@ -14,6 +14,7 @@ public class ChatUI {
     private final TextArea chatArea;
     private final Client client;
     private final ObservableList<String> users = FXCollections.observableArrayList();
+    private String selectedRecipient = null;
 
 
     public ChatUI(String username) {
@@ -39,18 +40,32 @@ public class ChatUI {
 
         root.setRight(userListBox);
 
+        // Handle user click for DM
+        userListView.setOnMouseClicked(e -> {
+            selectedRecipient = userListView.getSelectionModel().getSelectedItem();
+        });
+
         // ----- Input area -----
         TextField inputField = new TextField();
         Button sendBtn = new Button("Send");
         HBox inputBox = new HBox(10, inputField, sendBtn);
         HBox.setHgrow(inputField, Priority.ALWAYS);
 
+        // Handle sending message
         sendBtn.setOnAction(e -> {
             String message = inputField.getText();
             if (!message.isEmpty()) {
-                chatArea.appendText("[Public] "+ username + ": " + message + "\n");
                 inputField.clear();
-                client.sendMessage(message);
+                client.sendMessage(message, selectedRecipient);
+
+                if (selectedRecipient != null) {
+                    chatArea.appendText("[To " + selectedRecipient + "] " + username + ": " + message + "\n");
+
+                    // change back to public chat after each direct message
+                    selectedRecipient = null;
+                } else {
+                    chatArea.appendText("[Public] "+ username + ": " + message + "\n");
+                }
             }
         });
 

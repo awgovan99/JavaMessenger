@@ -54,14 +54,8 @@ public class Client {
         }
     }
 
-    public void sendMessage(String userMessage) {
-        Message msg = new Message(Message.Type.TEXT, userName, userMessage, null);
-        String json = gson.toJson(msg);
-        output.println(json);
-    }
-
-    public void sendDirectMessage(String directMessage, String recipient) {
-        Message msg = new Message(Message.Type.TEXT, userName, directMessage, recipient);
+    public void sendMessage(String userMessage, String recipient) {
+        Message msg = new Message(Message.Type.TEXT, userName, userMessage, recipient);
         String json = gson.toJson(msg);
         output.println(json);
     }
@@ -77,7 +71,7 @@ public class Client {
                             if(msg.getRecipient() == null) {
                                 chatUI.addMessage("[Public] "+ msg.getSender() + ": " + msg.getContent());
                             } else{
-                                chatUI.addMessage("[" + msg.getSender() +" -> you]: " + msg.getContent());
+                                chatUI.addMessage("[From " + msg.getSender() +"]: " + msg.getContent());
                             }
                             break;
 
