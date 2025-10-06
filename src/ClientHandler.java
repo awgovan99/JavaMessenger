@@ -39,7 +39,7 @@ public class ClientHandler implements Runnable {
     }
 
     public void receiveMessage() {
-        Message joinMessage = new Message(Message.Type.USER_JOINED, userName, null);
+        Message joinMessage = new Message(Message.Type.USER_JOINED, userName, null, null);
         server.broadcastMessage(joinMessage);
 
         String receivedMessage;
@@ -64,7 +64,7 @@ public class ClientHandler implements Runnable {
 
     public void disconnect() {
         try {
-            Message exitMessage = new Message(Message.Type.USER_LEFT, userName, null);
+            Message exitMessage = new Message(Message.Type.USER_LEFT, userName, null, null);
             server.broadcastMessage(exitMessage);
 
             socket.close();
