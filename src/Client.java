@@ -1,8 +1,8 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import com.google.gson.Gson;
@@ -60,6 +60,22 @@ public class Client {
         output.println(json);
     }
 
+    public void sendFile(File file, String recipient) {
+        try {
+            byte[] fileBytes = Files.readAllBytes(file.toPath());
+            String encoded = Base64.getEncoder().encodeToString(fileBytes);
+            String content = file.getName() + " : " + encoded;
+
+            Message msg = new Message(Message.Type.FILE, userName, content, recipient);
+
+            String json = gson.toJson(msg);
+            output.println(json);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void receiveMessage() {
         CompletableFuture.runAsync(() -> {
             try {
@@ -88,6 +104,16 @@ public class Client {
 
                         case USER_LEFT:
                             chatUI.removeUser(msg.getSender());
+                            break;
+
+                        case FILE:
+                            String[] parts =  msg.getContent().split(" : ");
+                            String fileName = parts[0];
+                            String encoded = parts[1];
+
+                            byte[] fileBytes = Base64.getDecoder().decode(encoded);
+                            File file = Files.write(Path.of("downloaded " + fileName), fileBytes).toFile();
+
                             break;
                     }
                 }

@@ -7,6 +7,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 public class ChatUI {
@@ -56,15 +58,22 @@ public class ChatUI {
             String message = inputField.getText();
             if (!message.isEmpty()) {
                 inputField.clear();
-                client.sendMessage(message, selectedRecipient);
 
-                if (selectedRecipient != null) {
-                    chatArea.appendText("[To " + selectedRecipient + "] " + username + ": " + message + "\n");
-
-                    // change back to public chat after each direct message
-                    selectedRecipient = null;
+                //TEMP
+                if(message.startsWith("/sendFile ") && selectedRecipient != null) {
+                    File file = new File(message.split(" ")[1]);
+                    client.sendFile(file, selectedRecipient);
                 } else {
-                    chatArea.appendText("[Public] "+ username + ": " + message + "\n");
+                    client.sendMessage(message, selectedRecipient);
+
+                    if (selectedRecipient != null) {
+                        chatArea.appendText("[To " + selectedRecipient + "] " + username + ": " + message + "\n");
+
+                        // change back to public chat after each direct message
+                        selectedRecipient = null;
+                    } else {
+                        chatArea.appendText("[Public] " + username + ": " + message + "\n");
+                    }
                 }
             }
         });
