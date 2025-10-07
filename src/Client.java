@@ -112,7 +112,9 @@ public class Client {
                             String encoded = parts[1];
 
                             byte[] fileBytes = Base64.getDecoder().decode(encoded);
-                            File file = Files.write(Path.of("downloaded " + fileName), fileBytes).toFile();
+                            File file = Files.write(Path.of(fileName), fileBytes).toFile();
+
+                            chatUI.addMessage("Received file: " + fileName);
 
                             break;
                     }

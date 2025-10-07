@@ -7,6 +7,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -47,10 +49,24 @@ public class ChatUI {
             selectedRecipient = userListView.getSelectionModel().getSelectedItem();
         });
 
+        // ----- File sending -----
+        Button attachBtn = new Button("📎");
+        attachBtn.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select File to Send");
+            File file = fileChooser.showOpenDialog(this.getScene().getWindow());
+
+            // Can only send file to 1 person at the moment
+            if (file != null && selectedRecipient != null) {
+                client.sendFile(file, selectedRecipient);
+                chatArea.appendText("Sent file: " + file.getName() + "\n");
+            }
+        });
+
         // ----- Input area -----
         TextField inputField = new TextField();
         Button sendBtn = new Button("Send");
-        HBox inputBox = new HBox(10, inputField, sendBtn);
+        HBox inputBox = new HBox(10, inputField, sendBtn, attachBtn);
         HBox.setHgrow(inputField, Priority.ALWAYS);
 
         // Handle sending message
@@ -58,22 +74,15 @@ public class ChatUI {
             String message = inputField.getText();
             if (!message.isEmpty()) {
                 inputField.clear();
+                client.sendMessage(message, selectedRecipient);
 
-                //TEMP
-                if(message.startsWith("/sendFile ") && selectedRecipient != null) {
-                    File file = new File(message.split(" ")[1]);
-                    client.sendFile(file, selectedRecipient);
+                if (selectedRecipient != null) {
+                    chatArea.appendText("[To " + selectedRecipient + "] " + username + ": " + message + "\n");
+
+                    // change back to public chat after each direct message
+                    selectedRecipient = null;
                 } else {
-                    client.sendMessage(message, selectedRecipient);
-
-                    if (selectedRecipient != null) {
-                        chatArea.appendText("[To " + selectedRecipient + "] " + username + ": " + message + "\n");
-
-                        // change back to public chat after each direct message
-                        selectedRecipient = null;
-                    } else {
-                        chatArea.appendText("[Public] " + username + ": " + message + "\n");
-                    }
+                    chatArea.appendText("[Public] " + username + ": " + message + "\n");
                 }
             }
         });
