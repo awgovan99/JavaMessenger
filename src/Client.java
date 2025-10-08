@@ -107,14 +107,23 @@ public class Client {
                             break;
 
                         case FILE:
+
+                            // Create downloads folder if it doesn't exist
+                            File downloadDir = new File("Downloads");
+                            if (!downloadDir.exists()) {
+                                downloadDir.mkdirs();
+                            }
+
                             String[] parts =  msg.getContent().split(" : ");
                             String fileName = parts[0];
                             String encoded = parts[1];
 
+                            // Place downloaded file into downloads folder
+                            File file = new File(downloadDir, fileName);
                             byte[] fileBytes = Base64.getDecoder().decode(encoded);
-                            File file = Files.write(Path.of(fileName), fileBytes).toFile();
+                            Files.write(file.toPath(), fileBytes).toFile();
 
-                            chatUI.addMessage("Received file: " + fileName);
+                            chatUI.addMessage("Received file " + fileName + " from " + msg.getSender());
 
                             break;
                     }
