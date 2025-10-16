@@ -118,8 +118,6 @@ public class Client {
                         case USER_LIST:
                             List<String> onlineUsers = gson.fromJson(msg.getContent(), new TypeToken<List<String>>(){}.getType());
                             chatUI.updateUserList(onlineUsers);
-
-                            System.out.println(onlineUsers);
                             break;
 
                         case USER_JOINED:

@@ -8,9 +8,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.List;
 
 public class ChatUI {
@@ -50,18 +48,7 @@ public class ChatUI {
         });
 
         // ----- File sending -----
-        Button attachBtn = new Button("📎");
-        attachBtn.setOnAction(e -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Select File to Send");
-            File file = fileChooser.showOpenDialog(this.getScene().getWindow());
-
-            // Can only send file to 1 person at the moment
-            if (file != null && selectedRecipient != null) {
-                client.sendFile(file, selectedRecipient);
-                chatArea.appendText("Sent file: " + file.getName() + "\n");
-            }
-        });
+        Button attachBtn = getAttachBtn();
 
         // ----- Input area -----
         TextField inputField = new TextField();
@@ -95,8 +82,27 @@ public class ChatUI {
         this.scene = new Scene(root, 500, 300);
     }
 
+    private Button getAttachBtn() {
+        Button attachBtn = new Button("📎");
+        attachBtn.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select File to Send");
+            File file = fileChooser.showOpenDialog(this.getScene().getWindow());
+
+            // Can only send file to 1 person at the moment
+            if (file != null && selectedRecipient != null) {
+                client.sendFile(file, selectedRecipient);
+                chatArea.appendText("Sent file: " + file.getName() + "\n");
+                selectedRecipient = null;
+            }
+        });
+        return attachBtn;
+    }
+
     public void addMessage(String message) {
-        chatArea.appendText(message + "\n");
+        Platform.runLater(() -> {
+            chatArea.appendText(message + "\n");
+        });
     }
 
     public void updateUserList(List<String> onlineUsers) {
@@ -108,9 +114,6 @@ public class ChatUI {
     public void addUser(String username) {
         Platform.runLater(() -> {
             users.add(username);
-
-            System.out.println(users);
-
             addMessage(username + " has joined the chat!");
         });
     }
@@ -118,9 +121,6 @@ public class ChatUI {
     public void removeUser(String username) {
         Platform.runLater(() -> {
             users.remove(username);
-
-            System.out.println(users);
-
             addMessage(username + " has left the chat!");
         });
     }
