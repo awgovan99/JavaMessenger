@@ -1,19 +1,28 @@
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.List;
 
 public class ChatUI {
     private final Scene scene;
-    private final TextArea chatArea;
+//    private final TextArea chatArea;
+    VBox chatBox;
     private final Client client;
     private final ObservableList<String> users = FXCollections.observableArrayList();
     private String selectedRecipient = null;
@@ -24,10 +33,10 @@ public class ChatUI {
 
         BorderPane root = new BorderPane();
 
-        // ----- Chat area -----
-        chatArea = new TextArea();
-        chatArea.setEditable(false);
-        chatArea.setWrapText(true);
+        // ----- Chat Box -----a();
+
+        chatBox = new VBox();
+        ScrollPane scrollPane = new ScrollPane(chatBox);
 
         // ----- User list sidebar -----
         Label userListLabel = new Label("Online Users");
@@ -64,19 +73,18 @@ public class ChatUI {
                 client.sendMessage(message, selectedRecipient);
 
                 if (selectedRecipient != null) {
-                    chatArea.appendText("[To " + selectedRecipient + "] " + username + ": " + message + "\n");
-
+                    addMessage("[To " + selectedRecipient + "] " + username + ": " + message);
                     // change back to public chat after each direct message
                     selectedRecipient = null;
                 } else {
-                    chatArea.appendText("[Public] " + username + ": " + message + "\n");
+                    addMessage("[Public] " + username + ": " + message);
                 }
             }
         });
 
-        VBox chatAndInputBox = new VBox(10, chatArea, inputBox);
+        VBox chatAndInputBox = new VBox(10, scrollPane, inputBox);
         chatAndInputBox.setStyle("-fx-padding: 10;");
-        VBox.setVgrow(chatArea, Priority.ALWAYS);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
         root.setCenter(chatAndInputBox);
 
         this.scene = new Scene(root, 500, 300);
@@ -92,7 +100,7 @@ public class ChatUI {
             // Can only send file to 1 person at the moment
             if (file != null && selectedRecipient != null) {
                 client.sendFile(file, selectedRecipient);
-                chatArea.appendText("Sent file: " + file.getName() + "\n");
+                addMessage("Sent file: " + file.getName());
                 selectedRecipient = null;
             }
         });
@@ -101,7 +109,17 @@ public class ChatUI {
 
     public void addMessage(String message) {
         Platform.runLater(() -> {
-            chatArea.appendText(message + "\n");
+            Label messageLabel = new Label(message);
+            chatBox.getChildren().add(messageLabel);
+        });
+    }
+
+    public void addImage(Image img) {
+        Platform.runLater(() -> {
+            ImageView imageView = new ImageView(img);
+            imageView.setFitWidth(200);
+            imageView.setPreserveRatio(true);
+            chatBox.getChildren().add(imageView);
         });
     }
 

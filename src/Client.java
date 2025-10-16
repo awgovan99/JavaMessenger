@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import javafx.scene.image.Image;
 
 public class Client {
     // Using these for now
@@ -64,9 +65,17 @@ public class Client {
         try {
             byte[] fileBytes = Files.readAllBytes(file.toPath());
             String encoded = Base64.getEncoder().encodeToString(fileBytes);
-            String content = file.getName() + " : " + encoded;
+            String fileName = file.getName();
+            String content = fileName + " : " + encoded;
+            Message.Type messageType = Message.Type.FILE;
 
-            Message msg = new Message(Message.Type.FILE, userName, content, recipient);
+            if (fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".gif")) {
+                messageType = Message.Type.IMAGE;
+                Image img = new Image(new ByteArrayInputStream(fileBytes));
+                chatUI.addImage(img);
+            }
+
+            Message msg = new Message(messageType, userName, content, recipient);
 
             String json = gson.toJson(msg);
             output.println(json);
@@ -84,7 +93,7 @@ public class Client {
                 downloadDir.mkdirs();
             }
 
-            String[] parts =  msg.getContent().split(" : ");
+            String[] parts =  msg.getContent().split(" : ",2);
             String fileName = parts[0];
             String encoded = parts[1];
 
@@ -95,8 +104,14 @@ public class Client {
 
             chatUI.addMessage("Received file " + fileName + " from " + msg.getSender());
 
+            if(msg.getType() == Message.Type.IMAGE) {
+                System.out.println("display image");
+                Image img= new Image(new ByteArrayInputStream(fileBytes));
+                chatUI.addImage(img);
+            }
+
         } catch (IOException e) {
-            chatUI.addMessage("Error saving file: " + e.getMessage() + "\n");
+            chatUI.addMessage("Error saving file: " + e.getMessage());
         }
     }
 
@@ -128,7 +143,7 @@ public class Client {
                             chatUI.removeUser(msg.getSender());
                             break;
 
-                        case FILE:
+                        case FILE, IMAGE:
                             saveFile(msg);
                             break;
                     }
