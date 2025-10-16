@@ -66,7 +66,10 @@ public class Client {
             byte[] fileBytes = Files.readAllBytes(file.toPath());
             String encoded = Base64.getEncoder().encodeToString(fileBytes);
             String fileName = file.getName();
-            String content = fileName + " : " + encoded;
+
+            FileData fileData = new FileData(fileName, encoded);
+            String content = gson.toJson(fileData);
+
             Message.Type messageType = Message.Type.FILE;
 
             if (fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".gif")) {
@@ -93,9 +96,9 @@ public class Client {
                 downloadDir.mkdirs();
             }
 
-            String[] parts =  msg.getContent().split(" : ",2);
-            String fileName = parts[0];
-            String encoded = parts[1];
+            FileData fileData = gson.fromJson(msg.getContent(), FileData.class);
+            String fileName = fileData.getFileName();
+            String encoded = fileData.getEncodedFile();
 
             // Place downloaded file into downloads folder
             File file = new File(downloadDir, fileName);
