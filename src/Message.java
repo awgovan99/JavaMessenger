@@ -4,7 +4,9 @@ public class Message {
         TEXT,
         USER_JOINED,
         USER_LEFT,
-        USER_LIST
+        USER_LIST,
+        FILE,
+        IMAGE
     }
 
     private final Type type;

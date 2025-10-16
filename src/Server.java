@@ -48,8 +48,6 @@ public class Server {
                 sendUserList(handler);
 
                 clients.put(handler.getUserName(), handler);
-
-                System.out.println(clients);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -75,8 +73,6 @@ public class Server {
 
     public void removeClient(ClientHandler client) {
         clients.remove(client.getUserName());
-
-        System.out.println(clients);
     }
 
     public void sendUserList(ClientHandler client) {

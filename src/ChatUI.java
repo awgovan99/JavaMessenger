@@ -1,17 +1,28 @@
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.List;
 
 public class ChatUI {
     private final Scene scene;
-    private final TextArea chatArea;
+//    private final TextArea chatArea;
+    VBox chatBox;
     private final Client client;
     private final ObservableList<String> users = FXCollections.observableArrayList();
     private String selectedRecipient = null;
@@ -22,10 +33,10 @@ public class ChatUI {
 
         BorderPane root = new BorderPane();
 
-        // ----- Chat area -----
-        chatArea = new TextArea();
-        chatArea.setEditable(false);
-        chatArea.setWrapText(true);
+        // ----- Chat Box -----a();
+
+        chatBox = new VBox();
+        ScrollPane scrollPane = new ScrollPane(chatBox);
 
         // ----- User list sidebar -----
         Label userListLabel = new Label("Online Users");
@@ -45,10 +56,13 @@ public class ChatUI {
             selectedRecipient = userListView.getSelectionModel().getSelectedItem();
         });
 
+        // ----- File sending -----
+        Button attachBtn = getAttachBtn();
+
         // ----- Input area -----
         TextField inputField = new TextField();
         Button sendBtn = new Button("Send");
-        HBox inputBox = new HBox(10, inputField, sendBtn);
+        HBox inputBox = new HBox(10, inputField, sendBtn, attachBtn);
         HBox.setHgrow(inputField, Priority.ALWAYS);
 
         // Handle sending message
@@ -59,26 +73,54 @@ public class ChatUI {
                 client.sendMessage(message, selectedRecipient);
 
                 if (selectedRecipient != null) {
-                    chatArea.appendText("[To " + selectedRecipient + "] " + username + ": " + message + "\n");
-
+                    addMessage("[To " + selectedRecipient + "] " + username + ": " + message);
                     // change back to public chat after each direct message
                     selectedRecipient = null;
                 } else {
-                    chatArea.appendText("[Public] "+ username + ": " + message + "\n");
+                    addMessage("[Public] " + username + ": " + message);
                 }
             }
         });
 
-        VBox chatAndInputBox = new VBox(10, chatArea, inputBox);
+        VBox chatAndInputBox = new VBox(10, scrollPane, inputBox);
         chatAndInputBox.setStyle("-fx-padding: 10;");
-        VBox.setVgrow(chatArea, Priority.ALWAYS);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
         root.setCenter(chatAndInputBox);
 
         this.scene = new Scene(root, 500, 300);
     }
 
+    private Button getAttachBtn() {
+        Button attachBtn = new Button("📎");
+        attachBtn.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select File to Send");
+            File file = fileChooser.showOpenDialog(this.getScene().getWindow());
+
+            // Can only send file to 1 person at the moment
+            if (file != null && selectedRecipient != null) {
+                client.sendFile(file, selectedRecipient);
+                addMessage("Sent file: " + file.getName());
+                selectedRecipient = null;
+            }
+        });
+        return attachBtn;
+    }
+
     public void addMessage(String message) {
-        chatArea.appendText(message + "\n");
+        Platform.runLater(() -> {
+            Label messageLabel = new Label(message);
+            chatBox.getChildren().add(messageLabel);
+        });
+    }
+
+    public void addImage(Image img) {
+        Platform.runLater(() -> {
+            ImageView imageView = new ImageView(img);
+            imageView.setFitWidth(200);
+            imageView.setPreserveRatio(true);
+            chatBox.getChildren().add(imageView);
+        });
     }
 
     public void updateUserList(List<String> onlineUsers) {
@@ -90,9 +132,6 @@ public class ChatUI {
     public void addUser(String username) {
         Platform.runLater(() -> {
             users.add(username);
-
-            System.out.println(users);
-
             addMessage(username + " has joined the chat!");
         });
     }
@@ -100,9 +139,6 @@ public class ChatUI {
     public void removeUser(String username) {
         Platform.runLater(() -> {
             users.remove(username);
-
-            System.out.println(users);
-
             addMessage(username + " has left the chat!");
         });
     }

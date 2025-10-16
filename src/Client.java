@@ -1,12 +1,13 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import javafx.scene.image.Image;
 
 public class Client {
     // Using these for now
@@ -60,6 +61,63 @@ public class Client {
         output.println(json);
     }
 
+    public void sendFile(File file, String recipient) {
+        try {
+            byte[] fileBytes = Files.readAllBytes(file.toPath());
+            String encoded = Base64.getEncoder().encodeToString(fileBytes);
+            String fileName = file.getName();
+
+            FileData fileData = new FileData(fileName, encoded);
+            String content = gson.toJson(fileData);
+
+            Message.Type messageType = Message.Type.FILE;
+
+            if (fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".gif")) {
+                messageType = Message.Type.IMAGE;
+                Image img = new Image(new ByteArrayInputStream(fileBytes));
+                chatUI.addImage(img);
+            }
+
+            Message msg = new Message(messageType, userName, content, recipient);
+
+            String json = gson.toJson(msg);
+            output.println(json);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void saveFile(Message msg) {
+        try {
+            // Create downloads folder if it doesn't exist
+            File downloadDir = new File("Downloads");
+            if (!downloadDir.exists()) {
+                downloadDir.mkdirs();
+            }
+
+            FileData fileData = gson.fromJson(msg.getContent(), FileData.class);
+            String fileName = fileData.getFileName();
+            String encoded = fileData.getEncodedFile();
+
+            // Place downloaded file into downloads folder
+            File file = new File(downloadDir, fileName);
+            byte[] fileBytes = Base64.getDecoder().decode(encoded);
+            Files.write(file.toPath(), fileBytes).toFile();
+
+            chatUI.addMessage("Received file " + fileName + " from " + msg.getSender());
+
+            if(msg.getType() == Message.Type.IMAGE) {
+                System.out.println("display image");
+                Image img= new Image(new ByteArrayInputStream(fileBytes));
+                chatUI.addImage(img);
+            }
+
+        } catch (IOException e) {
+            chatUI.addMessage("Error saving file: " + e.getMessage());
+        }
+    }
+
     public void receiveMessage() {
         CompletableFuture.runAsync(() -> {
             try {
@@ -78,8 +136,6 @@ public class Client {
                         case USER_LIST:
                             List<String> onlineUsers = gson.fromJson(msg.getContent(), new TypeToken<List<String>>(){}.getType());
                             chatUI.updateUserList(onlineUsers);
-
-                            System.out.println(onlineUsers);
                             break;
 
                         case USER_JOINED:
@@ -88,6 +144,10 @@ public class Client {
 
                         case USER_LEFT:
                             chatUI.removeUser(msg.getSender());
+                            break;
+
+                        case FILE, IMAGE:
+                            saveFile(msg);
                             break;
                     }
                 }
