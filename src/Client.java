@@ -1,7 +1,6 @@
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -105,16 +104,17 @@ public class Client {
             byte[] fileBytes = Base64.getDecoder().decode(encoded);
             Files.write(file.toPath(), fileBytes).toFile();
 
-            chatUI.addMessage("Received file " + fileName + " from " + msg.getSender());
+            String fileMsg = "Received file " + fileName;
+            chatUI.addMessage(msg.getSender(), fileMsg, msg.getRecipient());
 
             if(msg.getType() == Message.Type.IMAGE) {
-                System.out.println("display image");
                 Image img= new Image(new ByteArrayInputStream(fileBytes));
                 chatUI.addImage(img);
             }
 
         } catch (IOException e) {
-            chatUI.addMessage("Error saving file: " + e.getMessage());
+            String errorMsg = "Error saving file: " + e.getMessage();
+            chatUI.addMessage(userName, errorMsg, msg.getRecipient());
         }
     }
 
@@ -126,11 +126,7 @@ public class Client {
                     Message msg = gson.fromJson(serverMessage, Message.class);
                     switch (msg.getType()) {
                         case TEXT:
-                            if(msg.getRecipient() == null) {
-                                chatUI.addMessage("[Public] "+ msg.getSender() + ": " + msg.getContent());
-                            } else{
-                                chatUI.addMessage("[From " + msg.getSender() +"]: " + msg.getContent());
-                            }
+                            chatUI.addMessage(msg.getSender(), msg.getContent(), msg.getRecipient());
                             break;
 
                         case USER_LIST:
